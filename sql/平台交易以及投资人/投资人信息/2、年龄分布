@@ -1,0 +1,77 @@
+
+
+# 新
+
+
+select case when a.age>=18 and a.age<=29 then '18-29岁'
+			when a.age>=30 and a.age<=39 then '30-39岁'
+			when a.age>=40 and a.age<=49 then '40-49岁'
+			when a.age>=50 then '50岁以上'
+			else a.age
+			end as ageScope ,
+			a.num
+
+from (SELECT	
+    count(1) as num,
+    year(now()) - year(f.BIRTHDAY) as age
+ FROM sp_data_user_base_info f,sp_investing i, sp_invest_project p
+ where f.BIRTHDAY is not null
+ 
+ 	and f.USER_ID = i.user_id	 
+ 	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+	and i.status in(1,2)			# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (1,2,3,4)		# -1,创建中,0,即将开始,										# 1,投标中,2,满标,3,还款中,4,还款完成,5,流标,6,结标
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 ？
+ 
+  group by age) a 
+
+
+
+
+
+# 旧
+select case when a.age>=18 and a.age<=29 then '18-29岁'
+			when a.age>=30 and a.age<=39 then '30-39岁'
+			when a.age>=40 and a.age<=49 then '40-49岁'
+			when a.age>=50 then '50岁以上'
+			else a.age
+			end as ageScope ,
+			a.num
+
+from (SELECT	
+    count(1) as num,
+    year(now()) - year(BIRTHDAY) as age
+ FROM sp_data_user_base_info 
+ where BIRTHDAY is not null  group by age) a 
+
+<——start——>
+
+select 
+		case 
+			when year(now())-year(u.birthday) < 30 and year(now())-year(u.birthday) >= 18 then 'age1'
+			when year(now())-year(u.birthday) < 40 and year(now())-year(u.birthday) >= 30 then 'age2'
+			when year(now())-year(u.birthday) < 50 and year(now())-year(u.birthday) >= 40 then 'age3'
+			when year(now())-year(u.birthday) >= 50 then 'age4' 
+		end as investUserAge, 
+		count(distinct u.user_id) num
+from 
+	sp_data_user_base_info u, sp_investing i, sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+where u.user_id = i.user_id and i.project_no = p.project_no 
+and i.status in (2)
+and p.status in (3,4)
+and p.project_type in (0,4,5)
+and p.project_no not in (select project_no from sp_project_tag pt where pt.tag = 0)
+and l.payed_on < @end_time
+and u.birthday is not null
+and year(now())-year(u.birthday) >= 18 
+group by investUserAge;
+
+<——end——>

@@ -1,0 +1,25 @@
+关联关系借贷余额/笔数 ？ 
+
+	这块的概念还是有一些混乱
+
+<——start——>
+
+关联关系借款余额。指截至统计时点，与平台具有关联关系的借款人通过平台撮合完成的借款总余额。关联关系指网络借贷信息中介机构主要股东、实际控制人、董事、监事、高级管理人员与其直接或间接控制、有重大影响的企业、自然人之间的关系，以及可能导致网络借贷信息中介机构利益转移的其他关系（主要股东，指持有或控制网络信息借贷中介机构5%以上股份或表决权的自然人、法人或其他组织；直接或间接控制企业，指直接或间接持有企业5%以上股份或表决权）； 
+
+中惠熙元是咱们的股东之一
+
+SELECT
+	SUM(ir.capital_amt)
+FROM 
+	sp_invest_project p, sp_investing_return ir, sp_investing i, sp_project_info pi
+WHERE i.project_no = p.project_no and i.trans_id = ir.invest_trans_id
+	AND pi.project_no = p.project_no
+	AND pi.core_enterprise_id = 205
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag where tag=0)
+	AND p.project_type IN (0,4,5)
+	and p.status in (3,4)
+	AND (ir.real_return_time is null or ir.real_return_time >= @end_time)
+	AND ir.created_on < @end_time;
+	
+
+<——end——>

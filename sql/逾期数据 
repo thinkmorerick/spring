@@ -1,0 +1,333 @@
+#  1、逾期金额  
+
+	# 思路 sp_loan_return 一张表就够用了
+
+	#  逾期条件判断 逾期金额 overdue_fee_amt > 0 and overdue_day > 0 判断是否逾期
+	#  逾期金额
+
+	select sum(a.capital_amt) 
+	from 
+			sp_loan_return a 
+	where 
+			overdue_fee_amt > 0 and overdue_day > 0
+
+<===start===>
+
+1、逾期金额：按合同约定，出借人到期未收到本金和利息的金额总合。收到，是指资金实际划付至出借人银行账户。
+	建斌这边给出的定义是：未偿还的本金和利息总额，若之后偿还了就减掉，宽限期内不算逾期。
+	所以只算当前时点的逾期金额，而不是历史所有的逾期金额。
+
+2、overdue_fee_amt和overdue_day每天上午1点更新，不够实时，没法使用。
+3、思路a：
+
+select 
+	sum(o.capital_amt+o.interest_amt)
+from sp_investing_return o, sp_investing i, sp_invest_project p 
+where i.project_no = p.project_no and i.trans_id = o.invest_trans_id 
+ and p.project_type in (0,4,5) 
+ AND p.status in (3,4)
+ and p.project_no not in (select project_no from sp_project_tag where tag=0) 
+ and (o.real_return_time is null or o.real_return_time >= @end_time)
+ and '2018-01-29' > case 
+	when DAYOFWEEK(o.return_time) in (1,2,3) then date_add(o.return_time, interval 3 day)
+	when DAYOFWEEK(o.return_time) in (4,5,6) then date_add(o.return_time, interval 5 day)
+	when dayofweek(o.return_time) = 7 then date_add(o.return_time, interval 4 day)
+	end;
+本方法耗时比较长。
+
+4、最好能在sp_investing_return中增加deadline字段。
+
+5、换个思路：
+思路b：
+逾期金额包含两部分，第一部分是借款方未在deadline之前还款导致的逾期，第二部分是借款方在deadline之前还款了但平台未在deadline之前给出借方回款导致的逾期。我们可以忽略第二部分，而只统计第一部分。
+统计sql如下：
+	需要注意六点：一是限定项目类型：我们的项目类型不只有道口贷的项目，还包含校友金服的项目
+				二是排除测试标
+				三是统计发生了逾期，并且至今没有还清的金额，而不是所有逾期的金额
+				四是限定统计截止时间
+				五是统计本金和利息和
+				六是返回结果基本为null，写代码时注意处理；或者直接在sql中处理：IFNULL(SUM(r.capital_amt + r.interest_amt), 0)
+
+方法1:			
+SELECT SUM(r.capital_amt + r.interest_amt) 
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+ 	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.dead_line < @end_time
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+其中@end_time 是我定义的时间变量，调用时传入当日0点即可。
+
+方法2: 利用后端定时任务生成的overdue_day和当期还款的还款状态计算。
+当期还款状态字段（return_status）可能废弃了，暂时不考虑这种方式。
+
+
+<===end===>
+
+准备ppt
+
+
+# 2、金额逾期率  
+
+	# 逾期金额 / 还款总金额  
+
+	# 思路
+
+		# 逾期金额/还款总金额
+	select sum(a.capital_amt) / (select sum(capital_amt) from sp_loan_return ) #还款总金额
+	from 
+			sp_loan_return a 
+	where 
+			overdue_fee_amt > 0 and overdue_day > 0
+
+<===start===>
+
+(1)金额逾期率：指定时点，逾期本息占待还本息的比率
+
+总待还本金+利息：
+select sum(o.capital_amt + o.interest_amt)
+from sp_investing_return o, sp_investing i, sp_invest_project p 
+where i.project_no = p.project_no and i.trans_id = o.invest_trans_id
+ and p.project_type in (0,4,5)
+ AND p.status in (3,4)
+ and p.project_no not in (select project_no from sp_project_tag where tag=0) 
+ and (o.real_return_time is null or o.real_return_time >= @end_time)
+ and o.created_on < @end_time;
+
+ (2)两者相除
+
+<===end===>
+
+
+# 3、逾期笔数 (笔数)
+
+	# trans_id = 笔数，项目的还款笔数
+	# project_no 一个项目多笔还款交易   
+
+	# 思路   # 笔数的判断条件 
+		
+
+
+	select sum(a.trans_id) 
+	from 
+			sp_loan_return a 
+	where 
+			a.overdue_fee_amt > 0 and a.overdue_day > 0
+
+<===start===>
+
+(1)逾期笔数：未偿还的本金和利息总额对应的项目总数
+
+SELECT 
+	COUNT(DISTINCT p.project_no)
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.dead_line < @end_time
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+<===end===>
+
+
+# 4、项目逾期率
+
+	# 项目逾期率是根据project_no 判断
+
+	select sum(a.project_no) 
+	from 
+			sp_loan_return a 
+	where 
+			a.overdue_fee_amt > 0 and a.overdue_day > 0
+
+<===start===>
+
+(1)项目逾期率：逾期项目数/借贷余额笔数
+
+(2)借贷余额笔数,借贷余额：指截至统计时点，经从业机构撮合完成且尚未偿还的借款本金总金额（不包括利息部分）
+select count(distinct p.project_no)
+from sp_investing_return o, sp_investing i, sp_invest_project p 
+where i.project_no = p.project_no and i.trans_id=o.invest_trans_id
+ and p.project_type in (0,4,5) 
+ and p.status in (3,4)
+ and p.project_no not in (select project_no from sp_project_tag where tag=0) 
+ and (o.real_return_time is null or o.real_return_time >= @end_time);
+
+<===end===>
+
+
+# 5、代偿金额 (元)
+# 6、代偿笔数    这个代偿是什么意思，应该还款的钱吗？return_num，capital_amt，interest_amt，overdue_fee_amt  
+
+		刚性兑付，代偿（就是指别人帮助还款）。
+
+<===start===>
+
+这两个暂时写死为0
+
+<===end===>
+
+# 7、逾期90天以上金额
+
+	select sum(a.capital_amt) 
+	from 
+			sp_loan_return a 
+	where 
+			overdue_fee_amt > 0 and overdue_day > 90
+
+<===start===>
+逾期90天（不含）以上金额：逾期90天（不含）以上的借款本金余额，若之后还了就减掉。
+【只统计本金逾期的金额】
+
+方法1:
+SELECT SUM(r.capital_amt) 
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.capital_amt > 0
+	AND r.dead_line < date_add(@end_time, interval -90 day)
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+方法2:
+利用 overdue_day 和标的的还款状态【不是某一期的还款状态】，标的状态仍是还款中，本金逾期超过90天的金额。
+但这种算法依赖后端的定时任务，而且数据不够精确。比如当天0点尚未还清，但我们运行定时任务的时候还清了，因而漏掉了这部分逾期数据。
+因此不建议使用。
+
+SELECT SUM(r.capital_amt) 
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.capital_amt > 0
+	AND r.overdue_day > 90
+	AND p.status = 3;
+
+<===end===>
+
+# 8、逾期90天以上（不含）笔数 overdue_day ，逾期天数 
+
+	select sum(a.trans_id) 
+	from 
+			sp_loan_return a 
+	where 
+			a.overdue_fee_amt > 0 and a.overdue_day > 90
+
+<===start===>
+
+逾期90天（不含）以上笔数：逾期90天（不含）以上的借款本金余额对应的项目数，若之后还了就减掉。
+
+SELECT 
+	COUNT(DISTINCT p.project_no) 
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.capital_amt > 0
+	AND r.dead_line < date_add(@end_time, interval -90 day)
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+<===end===>
+
+# 9、
+	项目分级逾期率 1-90 天     统计 不同分级的项目逾期的数量
+	项目分级逾期率 91-180 天
+	项目分级逾期率 180 天 以上  
+
+
+	select 
+			case when a.overdue_day>=1 and a.overdue_day<=90 then '1-90天'
+			when a.overdue_day>=91 and a.overdue_day<=180 then '91-180天'
+			when a.overdue_day>=180  then '180天以上'
+			else a.overdue_day
+			end as over_day ,
+
+			count(1) as num
+	
+	from 
+			sp_loan_return a 
+	where 
+			a.overdue_fee_amt > 0 and a.overdue_day > 0
+			
+			group by over_day
+
+<---start--->
+
+项目分级逾期率1~90（天）：逾期1~90（天）笔数/借贷余额笔数
+项目分级逾期率91~180（天）：逾期90~180（天）笔数/借贷余额笔数
+项目分级逾期率180天以上：逾期180天以上笔数/借贷余额笔数
+
+只考虑本金逾期，先计算当前逾期笔数，再计算借贷余额笔数，相除即可。
+eg: 项目分级逾期率1~90（天）
+
+SELECT 
+	COUNT(DISTINCT p.project_no) 
+FROM 
+	sp_loan_return r, sp_invest_project p 
+WHERE 1=1
+	AND r.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND r.capital_amt > 0
+	AND r.dead_line > date_add(@end_time, interval -90 day)
+	AND r.dead_line < @end_time
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+其他算法类似
+
+<----end----->
+
+# 10、
+
+	金额分级逾期率 1-91 天		统计 不同分级的金额 总金额
+	金额分级逾期率 91-180 天
+	金额分级逾期率 180 天 以上
+
+
+	select 
+			case when a.overdue_day>=1 and a.overdue_day<=90 then '1-90天'
+			when a.overdue_day>=91 and a.overdue_day<=180 then '91-180天'
+			when a.overdue_day>=180  then '180天以上'
+			else a.overdue_day
+			end as over_day ,
+
+			sum(a.capital_amt)
+
+	from 
+			sp_loan_return a 
+	where 
+			overdue_fee_amt > 0 and overdue_day > 0
+
+			group by over_day
+
+
+<---start---->
+
+金额分级逾期率1~90（天）：逾期1~90（天）金额/借贷余额
+金额分级逾期率91~180（天）：逾期91~180（天）金额/借贷金额
+金额分级逾期率180天以上：逾期180天以上金额/借贷金额
+
+参考项目逾期率写法，只考虑本金逾期
+
+<---end---->
+
+
+
+

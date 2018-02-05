@@ -1,0 +1,46 @@
+# 借贷余额
+
+	# 投资人 成功  投资项目 （项目的融合金额 = 与还款表中的本金是一个意思吗？） 
+
+	# 借贷余额跟投资余额是不是一回事 ？ 不是一回事，因为有时间差 
+	# 借贷余额，余额是指还款表中的本金吗 ? 
+	# 借贷余额，是指当前的借贷余额，还是累计的借贷余额 ？
+
+##思路一 根据投资方去看借贷余额 （不对）
+	select 
+
+	sum(r.interest_amt)   # 2715523.60
+	
+	from sp_investing i, sp_invest_project p,sp_loan_return r
+	where 1=1
+	and i.project_no = r.project_no
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+	and i.status in(1,2)				# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (1,2,3,4)		# -1,创建中,0,即将开始,
+										# 1,投标中,2,满标,3,还款中,4,还款完成,5,流标,6,结标
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 ？
+
+###思路二 当前借贷余额 （统计的应该是当前的借贷余额--个人观点）
+
+	select sum(capital_amt) from sp_loan_return where return_time > now()
+
+
+<——start——>
+
+借贷余额：尚未偿还的本金总额（不含利息）
+注意指定时点
+
+SELECT
+	SUM(o.capital_amt)
+FROM 
+	sp_investing_return o, sp_investing i, sp_invest_project p 
+WHERE 1=1
+	AND i.project_no = p.project_no and i.trans_id = o.invest_trans_id
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	AND (o.real_return_time is null or o.real_return_time >= @end_time)
+	AND o.created_on < @end_time;
+
+<——end——>

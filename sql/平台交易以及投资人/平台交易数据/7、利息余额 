@@ -1,0 +1,23 @@
+# 利息余额 (当前) 
+	select sum(interest_amt) from sp_loan_return where return_time > now()
+
+利息余额：尚未偿还的利息总额
+
+<——start——>
+
+利息余额：尚未偿还的利息总额
+注意指定时点
+
+SELECT
+	SUM(o.interest_amt)
+FROM 
+	sp_investing_return o, sp_investing i, sp_invest_project p 
+WHERE 1=1
+	AND i.project_no = p.project_no and i.trans_id = o.invest_trans_id
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	AND (o.real_return_time is null or o.real_return_time >= @end_time)
+	AND o.created_on < @end_time;
+
+<——end——>

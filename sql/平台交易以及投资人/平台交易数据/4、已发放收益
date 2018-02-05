@@ -1,0 +1,36 @@
+# 已发放收益
+
+	select 
+
+	sum(r.interest_amt)   
+	
+	from sp_investing i, sp_invest_project p,sp_loan_return r
+	where 1=1
+	and i.project_no = r.project_no
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+	and i.status in(1,2)			# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (3,4)			# -1,创建中,0,即将开始,
+									# 1,投标中,2,满标,3,还款中,4,还款完成,5,流标,6,结标
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 ？
+    and r.real_return_time < now() # 真实还款时间 < 当前时间 
+
+
+<——start——>
+
+已发放收益：已经发放给投资人的项目利息，若项目逾期则此部分暂不计入
+注意是指定时点的已发放收益
+
+SELECT 
+	sum(ir.interest_amt) as interestAmt
+FROM 
+	sp_investing_return ir, sp_investing i, sp_invest_project p
+WHERE 1=1
+	AND ir.invest_trans_id = i.trans_id
+	AND i.project_no = p.PROJECT_NO
+	AND p.project_no not in(SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND ir.real_return_time < @end_time; 
+
+<——end——>

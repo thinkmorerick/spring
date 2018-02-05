@@ -1,0 +1,55 @@
+# 交易笔数近10天分布
+
+	select 
+  DATE_FORMAT(a.deal_time,'%Y%m%d'),
+
+  sum(a.deal_trans_id_num)# 月份划分项目的交易数
+   from  
+  
+  ( select 
+	i.project_no	,
+	count(i.trans_id) as deal_trans_id_num, # 项目的交易数
+	l.PAYED_ON as deal_time
+	
+	from sp_investing i, sp_invest_project p,sp_loan_pay l
+	where 1=1
+	and i.project_no = l.project_no
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+	and i.status in(2)		# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (3,4)		
+	and l.PAYED_ON < now()	# 统计时间大于放款时间，代表成交
+	and l.PAYED_ON > DATE_SUB(CURDATE(), INTERVAL 10 day)
+    group by i.project_no	 
+	order by deal_time desc									
+   ) a  
+   
+   group by DATE_FORMAT(a.deal_time,'%Y%m%d')
+
+
+
+<——start——>
+
+SELECT
+	date(l.payed_on), COUNT(DIDSTINCT p.project_no)
+FROM 	 
+	sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+	AND p.project_no not in (select project_no from sp_project_tag where tag=0)
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND l.payed_on < @end_time
+	AND l.payed_on >= @start_time
+	# 或者 AND l.payed_on >= date_add(@end_time, interval -10 day)
+GROUP BY date(l.payed_on);
+
+
+
+<——end——>

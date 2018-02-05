@@ -1,0 +1,59 @@
+# 男女比例分布情况 
+
+
+### 新的
+select   a.`GENDER`,count(1)
+		from 		
+			sp_data_user_base_info a,
+			
+	(
+	select distinct (i.user_id)
+	from sp_invest_project p, sp_investing i
+	where 1=1
+		and i.project_no = p.project_no
+		and i.status in (1,2)
+		and p.status in (1,2,3,4,6)
+		and p.project_no not in (select project_no from sp_project_tag where tag=0)
+		and p.project_type in (0,4,5)
+	) b
+		
+		 where   a.USER_ID = b.user_id
+		 group by a.`GENDER`
+ 
+
+## 老的
+select case when sp_data_user_base_info.GENDER = 0 then '男'
+			when sp_data_user_base_info.GENDER = 1 then '女'
+			end as '性别'
+		,concat (round(count(GENDER)/(select count(*) from sp_data_user_base_info where GENDER is not NULL)*100,0)  
+		,''
+		,'%') as percent
+		
+		from sp_data_user_base_info where  GENDER is not NULL group by GENDER 
+
+<——start——>
+
+1、	男女比例分布、年龄分布、投资人地域分布同现在线上版本;
+稍微有点区别，以前投资人是只要投资就行，现在是放款了才认为出借成功。
+
+SELECT 
+	b.gender, count(distinct b.user_id) 
+FROM 
+	sp_data_user_base_info b, sp_investing i, sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE i.user_id = b.user_id and i.project_no = p.project_no
+	and i.status in (2)
+	and p.status in (3,4)
+	and p.project_type in (0,4,5)
+	and p.project_no not in (select project_no from sp_project_tag pt where pt.tag = 0)
+	and b.gender is not null 
+	and l.payed_on < @end_time
+GROUP BY b.gender;
+
+<——end——>

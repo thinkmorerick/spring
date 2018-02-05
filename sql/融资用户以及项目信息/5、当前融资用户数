@@ -1,0 +1,29 @@
+# 当前融资用户数 
+select 	
+	count(distinct(r.user_id))
+	
+	sp_invest_project p , sp_loan_return r
+where 1=1
+	p.PROJECT_NO = r.project_no
+	and p.STATUS in (3)  # 3处于还款中， 根据是否处于还款中 区分是否为当前融合融资用户
+    and p.project_type in (0,4,5)
+	and p.project_no not in (select project_no from sp_project_tag where tag=0)
+
+
+<——start——>
+
+当前融资用户：统计时点任存在待还金额的融资方数量。
+
+SELECT 
+	COUNT(DISTINCT pi.creditor_enterprise_id)
+FROM 
+	sp_loan_return r, sp_invest_project p, sp_project_info pi 
+WHERE 1=1
+	AND r.project_no = p.project_no 
+	AND pi.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+ 	AND p.status in (3,4)
+	AND p.project_no NOT IN (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND (r.real_return_time IS NULL OR r.real_return_time >= @end_time);
+
+<——end——>

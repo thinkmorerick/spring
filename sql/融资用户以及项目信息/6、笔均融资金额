@@ -1,0 +1,48 @@
+# 笔均融资金额 
+
+	# 相对融资用户笔均
+	# 相对平台的融资金额  具体是相对谁来考虑的？？
+
+# 相对平台融资用户考虑的笔均金额
+
+select 	
+	   i.creditor_enterprise_id, 
+	   
+	   avg(p.total_Amount) as loanAvgMoney,
+	   
+	   count(*) as loanNum, 
+	   
+	   sum(p.total_Amount) as loanAmount
+from 
+			sp_invest_project p, sp_project_info i
+		where p.project_no = i.project_no
+		and p.project_no not in (select project_no from sp_project_tag where tag=0)
+		and p.status in (1,2,3,4)
+        and p.project_type in (0,4)
+		group by i.creditor_enterprise_id
+
+
+<——start——>
+
+笔均融资金额：累计成交金额/累计成交笔数
+
+
+SELECT
+	SUM(p.total_amount)/COUNT(DISTINCT p.project_no)
+FROM 	 
+	sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+and p.project_no not in (select project_no from sp_project_tag where tag=0)
+and p.project_type in (0,4,5)
+and p.status in (3,4)
+and l.payed_on < @end_time;
+
+
+<——end——>

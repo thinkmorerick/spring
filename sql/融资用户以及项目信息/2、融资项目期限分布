@@ -1,0 +1,148 @@
+# 融资项目期限分布 
+
+# 1、融资成功的项目
+# 2、期限哪几个
+
+	# 3个月内，3个月，6个月，9个月，其他
+
+select b.dateScope , sum(b.num) 
+from 
+(
+# 融资项目分布
+select 
+case when a.mnth < 3 then '3个月内'
+		 when a.mnth = 3 then '3个月'
+		 when a.mnth > 3 and a.mnth <= 6 then '6个月'
+		 when a.mnth > 6 and a.mnth <= 9  then '9个月'
+		 when a.mnth > 9 then '其他' 
+		 else a.mnth 
+		 end as dateScope ,
+
+	count(1) as num
+
+from (
+
+# 融资成功项目期限
+select 
+	distinct(i.project_no),		
+	(year(p.REPAY_END_TIME) - year(p.REPAY_START_TIME))*12 + 	
+	 (month(p.REPAY_END_TIME) - month(p.REPAY_START_TIME)) as mnth
+	from sp_investing i, sp_invest_project p
+where 1=1
+	and i.project_no = p.PROJECT_NO
+	and i.status in (1,2)
+	and p.STATUS in (1,2,3,4,6)
+    and p.project_type in (0,4,5)
+	and p.project_no not in (select project_no from sp_project_tag where tag=0)
+	) a group by a.mnth
+
+) b 
+
+group by b.dateScope
+
+
+
+
+
+<——start——>
+融资项目期限分布，融资项目利率分布：同现在线上逻辑
+
+可以用放款时间做限制，也可以用标的状态，但是标的状态不够精确（统计截止时间和程序运行时间的间隔导致）
+
+SELECT
+	CASE WHEN due_time_unit= 0 then due_time 
+		ELSE ceil(due_time/30) 
+		END AS dueTime, 	
+	COUNT(DISTINCT p.project_no)
+FROM 	 
+	sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+	AND p.project_no not in (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND l.payed_on < @end_time
+GROUP BY dueTime;
+
+注意返回前端的数据格式和以前java要保持一致。
+
+参考java代码：initDataServiceImpl.java
+
+private String handleProjectPeriod(Date endTime, List<Integer> projectTypeList) {
+        JSONObject projectPeriodDistribution = new JSONObject();
+        List<Object[]> list = investProjectManager.getProjectCountByPeriod(endTime, projectTypeList, null);
+        // 小于三个月
+        int threeMin = 0;
+        // 三个月
+        int three = 0;
+        // 六个月
+        int six = 0;
+        // 九个月
+        int nine = 0;
+        // 其他
+        int others = 0;
+        for(Object[] objects : list){
+            BigInteger bigName = (BigInteger)objects[0];
+            BigInteger bigValue = (BigInteger)objects[1];
+            int name = bigName.intValue();
+            int value = bigValue.intValue();
+            if(name < 3){
+                threeMin = threeMin + value;
+            } else if(name == 3){
+                three = value;
+            } else if(name == 6){
+                six = value;
+            }else if(name == 9){
+                nine = value;
+            }else{
+                others = others + value;
+            }
+        }
+        projectPeriodDistribution.put("threeMin", threeMin);
+        projectPeriodDistribution.put("three", three);
+        projectPeriodDistribution.put("six", six);
+        projectPeriodDistribution.put("nine", nine);
+        projectPeriodDistribution.put("others", others);
+        return projectPeriodDistribution.toString();
+    }
+
+
+
+public List<Object[]> getProjectCountByPeriod(Date endTime, List<Integer> projectTypeList, UserTagCategoryEnum[] notInCategory){
+        StringBuilder sql = new StringBuilder("select " +
+                "case when due_time_unit= 0 then due_time else ceil(due_time/30) end as dueTime, " +
+                "count(distinct id) " +
+                "from sp_invest_project ip " +
+                "where status in (:status) " +
+                "and project_no not in (select project_no from sp_project_tag where tag = :tag) ");
+        Map<String, Object> params = new HashMap<>();
+        params.put("tag",ProjectTagEnum.TEST.getValue());
+        params.put("status",new Object[]{InvestProjectStatus.INVESTING.getDbValue(),InvestProjectStatus.FULLBID.getDbValue(),InvestProjectStatus.PAYBACK.getDbValue(),InvestProjectStatus.INVESTED.getDbValue()});
+        if(endTime != null){
+            sql.append("and created_on < :endTime ");
+            params.put("endTime", endTime);
+        }
+        if(projectTypeList != null && projectTypeList.size() > 0){
+            sql.append("and project_type in (:projectType) ");
+            params.put("projectType", projectTypeList);
+        }
+        if (ArrayUtils.isNotEmpty(notInCategory)){
+            sql.append(" and ip.project_no not in ");
+            DataService.excludeGivenUserTagCategoryProject(sql, params, notInCategory, true);
+        }
+        sql.append(" group by dueTime ");
+        return this.dao.executeQueryBySql(sql.toString(), null, params);
+    }
+
+
+<——end——>
+
+
+
+  

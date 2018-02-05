@@ -1,0 +1,37 @@
+# 累计及预期收益
+
+	select 
+	sum(l.INTEREST_AMT)   
+	
+	from  sp_invest_project p,sp_loan_pay l
+	where 1=1
+	and p.project_no = l.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+					
+	and p.STATUS in (-1,0,1,2,3,4)	
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 
+    and l.PAYED_ON <= now()   # 累计收益以放款时间为标准
+
+
+<——start——>
+
+放款项目累计及预期收益
+多种统计方式，通常做法是汇总 sp_investing_return 中的利息
+
+SELECT 
+	sum(ir.interest_amt) as interestAmt
+FROM 
+	sp_investing_return ir, sp_investing i, sp_invest_project p
+WHERE 1=1
+	AND ir.invest_trans_id = i.trans_id
+	AND i.project_no = p.PROJECT_NO
+	AND p.project_no not in(SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND ir.created_on < @end_time; 
+
+<——end——>
+
+	
+
+	 

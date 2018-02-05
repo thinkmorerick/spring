@@ -1,0 +1,24 @@
+
+# 1分钟缓存
+ONE_MINUTE_DURATION = 60 # 1minute
+
+# 1小时
+ONE_HOUR_DURATION = 3600 # 1hour
+
+# 30分钟
+THIRTY_MINUTE_DURATION = 1800 # 30分钟
+
+# 有效期2分钟
+TWO_MINUTE_DURATION = 120 # 2 minute
+
+# 5分钟
+FIVE_MINUTE_DURATION = 300 # 5 minute
+
+# 10分钟
+TEN_MINUTE_DURATION = 600 # 10minute
+
+# 2小时
+TOW_HOUR_DURATION = 7200 # 1小时
+
+# 1天有效期
+ONE_DAY_DURATION = 60 * 60 * 24 # 1天

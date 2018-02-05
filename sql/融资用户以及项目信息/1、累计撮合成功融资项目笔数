@@ -1,0 +1,44 @@
+# 累计撮合成功融资项目笔数  
+
+## 需求分析 
+
+sp_invest_project 1\  3 还款中、4 还款完成 
+	       	  2\  排除测试标
+
+select 	
+	count(distinct(p.PROJECT_NO))
+from  sp_invest_project p
+	-- 连接表
+	where 1=1
+	and p.STATUS in (3,4)
+    and p.project_type in (0,4,5)
+	and p.project_no not in(select project_no from sp_project_tag where tag=0)  
+
+
+
+<——start——>
+累计撮合成功XXXX笔融资项目：即为累计成交笔数
+
+
+SELECT
+	COUNT(DISTINCT p.project_no)
+FROM 	 
+	sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+	AND p.project_no not in (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND l.payed_on < @end_time;
+
+<——end——>
+		        
+
+
+	

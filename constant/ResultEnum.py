@@ -1,5 +1,8 @@
 from enum import Enum, unique
 
+"""
+    返回码枚举类
+"""
 
 @unique
 class ResultEnum(Enum):

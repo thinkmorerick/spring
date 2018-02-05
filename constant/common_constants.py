@@ -1,0 +1,97 @@
+
+PERSONAL = 'personal'
+MERCHANT = 'merchant'
+ALL = 'all'
+
+# 道口云统计纬度
+REQUEST_FROM_ADMIN = 'admin'
+REQUEST_FROM_DKY = 'dky'
+REQUEST_FROM_ALL = 'all'
+
+DKY_STATUS_ALL = 'all'
+DKY_STATUS_SUCCESS = 'success'
+
+ENTERPRISE_TYPE_CORE = 'core'
+ENTERPRISE_TYPE_SUBSIDIARY = 'subsidiary'
+ENTERPRISE_TYPE_ALL = 'all'
+
+# 道口云统计指标
+REGISTER_NUM = "register_num"
+REGISTER_CHANNEL_ADMIN = 'register_channel_admin'
+REGISTER_CHANNEL_VOLUNTARY = 'register_channel_voluntary'
+IDENTIFY_STATUS_SUCCESS_NUM = "identify_status_success_num"
+IDENTIFY_STATUS_ALL_NUM = "identify_status_all_num"
+IDENTIFY_STATUS_SUCCESS_REQUEST_FROM_DKY_NUM = "identify_status_success_request_from_dky_num"
+IDENTIFY_STATUS_SUCCESS_REQUEST_FROM_ADMIN_NUM = "identify_status_success_request_from_admin_num"
+IDENTIFY_STATUS_SUCCESS_REQUEST_FROM_ALL_NUM = "identify_status_success_request_from_all_num"
+IDENTIFY_STATUS_SUCCESS_ENTERPRISE_TYPE_CORE_NUM = "identify_status_success_enterprise_type_core_num"
+IDENTIFY_STATUS_SUCCESS_ENTERPRISE_TYPE_SUBSIDIARY_NUM = "identify_status_success_enterprise_type_subsidiary_num"
+SH_REGISTER_STATUS_SUCCESS_NUM = "sh_register_status_success_num"
+SH_REGISTER_STATUS_ALL_NUM = "sh_register_status_all_num"
+SH_REGISTER_STATUS_SUCCESS_REQUEST_FROM_DKY_NUM = "sh_register_status_success_request_from_dky_num"
+SH_REGISTER_STATUS_SUCCESS_REQUEST_FROM_ADMIN_NUM = "sh_register_status_success_request_from_admin_num"
+SH_REGISTER_STATUS_SUCCESS_REQUEST_FROM_ALL_NUM = "sh_register_status_success_request_from_all_num"
+SH_REGISTER_STATUS_SUCCESS_ENTERPRISE_TYPE_CORE_NUM = "sh_register_status_success_enterprise_type_core_num"
+SH_REGISTER_STATUS_SUCCESS_ENTERPRISE_TYPE_SUBSIDIARY_NUM = "sh_register_status_success_enterprise_type_subsidiary_num"
+AUTHORIZE_NUM = "authorize_num"
+ENTERPRISE_BUSINESS_NUM = "enterprise_business_status_all_num"
+ENTERPRISE_BUSINESS_AMOUNT = "enterprise_business_status_all_amount"
+FINANCING_REQUEST_STATUS_SUCCESS_NUM = "financing_request_status_success_num"
+FINANCING_REQUEST_STATUS_SUCCESS_AMOUNT = "financing_request_status_success_amount"
+FINANCING_REQUEST_STATUS_ALL_NUM = "financing_request_status_all_num"
+FINANCING_REQUEST_STATUS_ALL_AMOUNT = "financing_request_status_all_amount"
+INVEST_PROJECT_STATUS_SUCCESS_IS_RELATED_NUM = "invest_project_status_success_is_related_num"
+INVEST_PROJECT_STATUS_SUCCESS_IS_RELATED_AMOUNT = "invest_project_status_success_is_related_amount"
+INVEST_PROJECT_STATUS_SUCCESS_NUM = 'invest_project_status_success_num',
+INVEST_PROJECT_STATUS_SUCCESS_AMOUNT = 'invest_project_status_success_amount',
+SH_REGISTER_STATUS_ALL_REQUEST_FROM_DKY_NUM = "sh_register_status_all_request_from_dky_num"
+ADMIN_USER_NUM_WITH_DKY_ACCOUNT_ACTIVATED = "admin_user_num_with_dky_account_activated"
+ADMIN_USER_NUM_WITH_DKY_ACCOUNT_ACTIVATED_ENTERPRISE_TYPE_CORE = "admin_user_num_with_dky_account_activated_enterprise_type_core"
+DKY_ENTERPRISE_NUM = 'dky_enterprise_num'
+
+EMAIL_DKY = 'email_dky.html'
+
+
+REGISTER_CHANNEL_ALL = 'register_channel_all'
+REGISTER_CHANNEL_ADMIN = 'register_channel_admin'
+REGISTER_CHANNEL_VOLUNTARY = 'register_channel_voluntary'
+DKY_ACCOUNT_ACTIVE_ENTERPRISE_TYPE_CORE_NUM = 'dky_account_active_enterprise_type_core_num'
+DKY_ACCOUNT_ACTIVE_ENTERPRISE_TYPE_SUBSIDIARY_NUM = 'dky_account_active_enterprise_type_subsidiary_num'
+IDENTIFY_STATUS_SUCCESS_REQUEST_FROM_DKY_ENTERPRISE_TYPE_CORE_NUM = 'identify_status_success_request_from_dky_enterprise_type_core_num'
+IDENTIFY_STATUS_SUCCESS_REQUEST_FROM_DKY_ENTERPRISE_TYPE_SUBSIDIARY_NUM = 'identify_status_success_request_from_dky_enterprise_type_subsidiary_num'
+DKY_ENTERPRISE_NUM_ENTERPRISE_TYPE_CORE = 'dky_enterprise_num_enterprise_type_core'
+DKY_ENTERPRISE_NUM_ENTERPRISE_TYPE_SUBSIDIARY = 'dky_enterprise_num_enterprise_type_subsidiary'
+IDENTIFY_STATUS_ALL_REQUEST_FROM_DKY_NUM = 'identify_status_all_request_from_dky_num'
+DKY_REGISTER_SH_REGISTER_STATUS_SUCCESS_NUM = 'dky_register_sh_register_status_success_num'
+DKY_REGISTER_SH_REGISTER_STATUS_ALL_NUM = 'dky_register_sh_register_status_all_num'
+FAKE_ADMIN_SH_REGISTER_NUM = 'fake_admin_sh_register_num'
+ENTERPRISE_BUSINESS_ENTERPRISE_NUM = 'enterprise_business_enterprise_num'
+FINANCING_REQUEST_STATUS_FAILED_NUM = 'financing_request_status_failed_num'
+FINANCING_REQUEST_STATUS_SUCCESS_ENTERPRISE_NUM = 'financing_request_status_success_enterprise_num'
+FINANCING_REQUEST_STATUS_ALL_ENTERPRISE_NUM = 'financing_request_status_all_enterprise_num'
+FINANCING_REQUEST_STATUS_FAILED_ENTERPRISE_NUM = 'financing_request_status_failed_enterprise_num'
+INVEST_PROJECT_STATUS_SUCCESS_NOT_RELATED_NUM = 'invest_project_status_success_not_related_num'
+INVEST_PROJECT_STATUS_SUCCESS_NOT_RELATED_AMOUNT = 'invest_project_status_success_not_related_amount'
+
+DKY_STATUS_FAILED = 'dky_status_failed'
+
+# "应收账款转让"
+RECEIVABLE_TRANSFER = 'RECEIVABLE_TRANSFER'
+# "订单融资"
+ORDER = 'ORDER'
+# "预付款融资"
+PREPAYMENT = 'PREPAYMENT'
+# "应付款融资"
+PAYABLES = 'PAYABLES'
+
+FINANCING_REQUEST_TYPE_RECEIVABLE_TRANSFER_AMT = 'financing_request_type_receivable_transfer_amt'
+FINANCING_REQUEST_TYPE_ORDER_AMT = 'financing_request_type_order_amt'
+FINANCING_REQUEST_TYPE_PREPAYMENT_AMT = 'financing_request_type_prepayment_amt'
+FINANCING_REQUEST_TYPE_PAYABLES_AMT = 'financing_request_type_payables_amt'
+ENTERPRISE_BUSINESS_RELATED_NUM = 'enterprise_business_related_num'
+ENTERPRISE_BUSINESS_RELATED_AMOUNT = 'enterprise_business_related_amount'
+
+FINANCING_REQUEST_TYPE_RECEIVABLE_TRANSFER_NUM= 'financing_request_type_receivable_transfer_num'
+FINANCING_REQUEST_TYPE_ORDER_NUM = 'financing_request_type_order_num'
+FINANCING_REQUEST_TYPE_PREPAYMENT_NUM = 'financing_request_type_prepayment_num'
+FINANCING_REQUEST_TYPE_PAYABLES_NUM = 'financing_request_type_payables_num'

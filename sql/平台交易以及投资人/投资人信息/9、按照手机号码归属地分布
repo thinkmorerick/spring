@@ -1,0 +1,44 @@
+# 按照手机号码归属地分布
+select 
+	u.province as '省份', 
+	count(distinct(i.user_id)) as '投资人数',
+	sum(i.amount) as '投资额'
+from sp_invest_project p, sp_investing i
+left join sp_data_user_base_info u on u.user_id = i.user_id
+where 1=1
+	and p.project_no = i.project_no
+	and i.status in (1,2)
+	and p.status in(1,2,3,4,6)
+	and p.project_type in (0,4,5)
+	and p.PROJECT_NO not in (select project_no from sp_project_tag where tag=0)
+        and u.province is not null
+	-- and u.province <>'全国'
+	-- and u.province <>'未知'
+
+group by u.province
+order by count(distinct(i.user_id)) desc;
+
+
+<——start——>
+
+SELECT 
+	u.province, COUNT(distinct u.user_id) as num 
+FROM 
+	sp_data_user_base_info u, sp_investing i, sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE u.user_id=i.user_id
+	and i.project_no = p.project_no
+	and i.status in (2)
+	and p.status in (3,4)
+	and p.project_no not in (SELECT project_no FROM sp_project_tag pt where pt.tag = 0)
+	and l.payed_on <= @end_time
+	and u.province is not null and u.province <>'全国' and u.province <>'未知'
+GROUP BY u.province;
+
+<——end——>

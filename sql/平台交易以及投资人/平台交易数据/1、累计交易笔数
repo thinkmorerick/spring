@@ -1,0 +1,44 @@
+# 累计交易笔数
+
+# 思路  1、判断项目是否成功，
+	   2、根据投资人trans_id订单号统计交易
+	   
+	select 
+	count(i.trans_id)
+	
+	from sp_investing i, sp_invest_project p
+	where 1=1
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试标的
+	and i.status in(1,2)			# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (1,2,3,4)		# -1,创建中,0,即将开始,
+										# 1,投标中,2,满标,3,还款中,4,还款完成,5,流标,6,结标
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 ？
+
+<——start——>
+
+累计成交笔数：成交项目总数，即累计交易总额所对应的成交项目数量
+注意三点：
+	1、时间口径为放款时间，也就是说放款了才认为是成交
+	2、一笔交易成功指的是一笔项目融资成功
+	3、sp_loan_pay 同一个标的可能放款两次
+
+SELECT
+	COUNT(DISTINCT p.project_no)
+FROM 	 
+	sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+and p.project_no not in (select project_no from sp_project_tag where tag=0)
+and p.project_type in (0,4,5)
+and p.status in (3,4)
+and l.payed_on < @end_time;
+
+<——end——>
+

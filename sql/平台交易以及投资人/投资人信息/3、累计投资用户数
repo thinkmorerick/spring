@@ -1,0 +1,37 @@
+# 累计投资用户数
+	select 
+	-- sum(i.amount) as investAmt, 
+	count(distinct(i.user_id)) as investNum
+	from sp_investing i, sp_invest_project p
+	where 1=1
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) #tag，0 代表的是测试表
+	and i.status in(1,2)			# -1-失败，0-等待确认，1-已确认，2-成功
+	and p.STATUS in (1,2,3,4,6)		# -1,创建中,0,即将开始,
+										# 1,投标中,2,满标,3,还款中,4,还款完成,5,流标,6,结标
+    and p.project_type in (0,4,5)  # 0,道口贷,1,道口计划,2,道口保理,3,上行快线 ？
+
+
+<——start——>
+
+累计投资用户：在道口贷进行过投资的用户数量
+
+SELECT 
+	COUNT(distinct i.user_id) as num 
+FROM 
+	sp_investing i, sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1
+	and i.project_no = p.project_no
+	and i.status in (2)
+	and p.status in (3,4)
+	and p.project_no not in (SELECT project_no FROM sp_project_tag pt where pt.tag = 0)
+	and l.payed_on <= @end_time;
+
+<——end——>

@@ -1,0 +1,53 @@
+
+# 最大单一投资人投资余额占比(%)
+select a.user_id,
+	
+		   a.invest/(select 
+	sum(i.amount)
+	from sp_investing i, sp_invest_project p
+	where 1=1
+	and i.project_no = p.PROJECT_NO
+	and p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	and i.status in(1,2)			
+	and p.STATUS in (1,2,3,4)		
+										
+    and p.project_type in (0,4)   
+    ) as per
+	
+from (select 
+      i.user_id,
+	  sum(i.amount) as invest
+	  from sp_investing i, sp_invest_project p
+	  where 1=1
+	  and i.project_no = p.PROJECT_NO
+	  and p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	  and i.status in(1,2)			
+	  and p.STATUS in (1,2,3,4)												
+      and p.project_type in (0,4,5)  
+      group by i.user_id) a     
+      order by per desc 
+      limit 1
+
+<——start——>
+
+最大单一投资人投资余额占比(%)：当前待收最多的投资人的待收金额/总计借贷余额
+前十大投资人投资余额占比(%)：前十大待收最多的投资人的待收金额总和/总计借贷余额
+
+SELECT
+	SUM(o.capital_amt)
+FROM 
+	sp_investing_return o, sp_investing i, sp_invest_project p 
+WHERE 1=1
+	AND i.project_no = p.project_no and i.trans_id = o.invest_trans_id
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	AND (o.real_return_time is null or o.real_return_time >= @end_time)
+	AND o.created_on < @end_time
+GROUP BY i.user_id
+ORDER BY SUM(o.capital_amt) DESC
+LIMIT 1;
+
+再和借贷余额相除即可
+
+<——end——>

@@ -1,0 +1,41 @@
+# 最大单一借款人投资金额占比
+
+SELECT 
+	
+	e.name AS 全称,
+    
+	sum(l.capital_amt) as  daihuan
+FROM sp_project_info i,sp_invest_project p,sp_loan_return l,sp_enterprise_info e
+WHERE 1=1
+AND i.project_no=p.project_no
+AND i.project_no=l.project_no
+AND i.creditor_enterprise_id=e.id
+AND p.project_no not in (SELECT project_no From sp_project_tag where tag=0)
+AND p.status in (1,2,3,4)
+AND l.capital_amt>0.00
+GROUP BY i.creditor_enterprise_id
+ORDER BY daihuan desc
+limit 1
+
+
+<——start——>
+
+最大单一融资(借款）人待还金额占比(%)：融资最多的一户融资人/借贷余额
+
+SELECT
+	SUM(o.capital_amt)
+FROM 
+	sp_investing_return o, sp_investing i, sp_invest_project p, sp_project_info pi 
+WHERE 1=1
+	AND i.project_no = p.project_no and i.trans_id = o.invest_trans_id
+	AND pi.project_no = p.project_no
+	AND p.project_type in (0,4,5)
+	and p.status in (3,4)
+	AND p.project_no not in (select project_no from sp_project_tag where tag=0) 
+	AND (o.real_return_time is null or o.real_return_time >= @end_time)
+	AND o.created_on < @end_time
+GROUP BY pi.creditor_enterprise_id
+ORDER BY SUM(o.capital_amt) DESC
+LIMIT 1;
+
+<——end——>

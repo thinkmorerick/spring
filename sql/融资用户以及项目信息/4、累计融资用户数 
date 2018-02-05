@@ -1,0 +1,39 @@
+# 累计融资用户数 （累计融资成功用户）
+
+	# 融资用户有两类 融资还款完结用户 +  融资正在还款用户 
+	#  sp_invest_project , sp_loan_return  (表中的用户都是属于正在还款用户吗)
+
+select 	
+	count(distinct(r.user_id))
+	
+	sp_invest_project p , sp_loan_return r
+where 1=1
+	p.PROJECT_NO = r.project_no
+	and p.STATUS in (3,4)
+   	and p.project_type in (0,4,5)
+	and p.project_no not in (select project_no from sp_project_tag where tag=0)
+
+
+<——start——>
+累计融资用户：同一融资人多次融资按一次计算，即道口贷总计的融资方
+包含了融资个人和融资企业
+
+SELECT
+	COUNT(DISTINCT pi.creditor_enterprise_id)
+FROM 	 
+	sp_project_info pi, sp_invest_project p
+LEFT JOIN 
+	(
+	SELECT project_no, min(payed_on) AS payed_on
+	From sp_loan_pay
+	GROUP BY project_no
+	) l
+ON l.project_no = p.project_no
+WHERE 1=1 
+	AND p.project_no = pi.project_no
+	AND p.project_no not in (SELECT project_no FROM sp_project_tag WHERE tag = 0)
+	AND p.project_type in (0,4,5)
+	AND p.status in (3,4)
+	AND l.payed_on < @end_time;
+
+<——end——>
